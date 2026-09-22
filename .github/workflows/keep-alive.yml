@@ -1,0 +1,26 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Berjalan otomatis setiap 3 hari sekali pada jam 00:00 UTC (07:00 WIB)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Memungkinkan kita klik tombol tes secara manual
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Mengirim ping berkala ke Supabase agar tetap aktif..."
+          HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/departments?select=id&limit=1")
+          
+          echo "Status respons HTTP: $HTTP_RESPONSE"
+          if [ "$HTTP_RESPONSE" -eq 200 ] || [ "$HTTP_RESPONSE" -eq 206 ]; then
+            echo "SUKSES: Database Supabase aktif, terjaga, dan bebas dari pembekuan 7 hari!"
+          else
+            echo "Catatan: Gateway menerima sinyal ping dengan kode $HTTP_RESPONSE (tetap dihitung sebagai aktivitas)."
+          fi
